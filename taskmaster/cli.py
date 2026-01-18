@@ -49,7 +49,8 @@ def main():
     help="Task priority"
 )
 @click.option("-t", "--tag", multiple=True, help="Add tags to the task")
-def add(title: str, description: str, priority: str, tag: tuple):
+@click.option("--due", default=None, help="Due date (YYYY-MM-DD format)")
+def add(title: str, description: str, priority: str, tag: tuple, due: str):
     """Add a new task."""
     manager = TaskManager()
     task = manager.add_task(
@@ -57,8 +58,13 @@ def add(title: str, description: str, priority: str, tag: tuple):
         description=description,
         priority=priority,
         tags=list(tag),
+        due_date=due,
     )
-    console.print(f"[green]Created task:[/green] {task.title} [dim](ID: {task.id})[/dim]")
+    due_str = ""
+    if task.due_date:
+        due_str = f" [dim](Due: {task.due_date.strftime('%Y-%m-%d')})[/dim]"
+    msg = f"[green]Created task:[/green] {task.title} [dim](ID: {task.id})[/dim]"
+    console.print(f"{msg}{due_str}")
 
 
 @main.command()
@@ -86,6 +92,7 @@ def list(status: str, priority: str):
     table.add_column("Title")
     table.add_column("Priority")
     table.add_column("Status")
+    table.add_column("Due Date")
     table.add_column("Tags")
 
     for task in tasks:
@@ -93,11 +100,19 @@ def list(status: str, priority: str):
         status_style = get_status_color(task.status)
         tags_str = ", ".join(task.tags) if task.tags else "-"
 
+        if task.due_date:
+            due_str = task.due_date.strftime("%Y-%m-%d")
+            if task.is_overdue:
+                due_str = f"[red bold]{due_str}[/red bold]"
+        else:
+            due_str = "-"
+
         table.add_row(
             task.id,
             task.title,
             f"[{priority_style}]{task.priority.value}[/{priority_style}]",
             f"[{status_style}]{task.status.value}[/{status_style}]",
+            due_str,
             tags_str,
         )
 
@@ -142,8 +157,16 @@ def show(task_id: str):
     console.print(f"\n[bold]{task.title}[/bold]")
     console.print(f"[dim]ID: {task.id}[/dim]")
     console.print(f"Description: {task.description or '(none)'}")
-    console.print(f"Priority: [{get_priority_color(task.priority)}]{task.priority.value}[/{get_priority_color(task.priority)}]")
-    console.print(f"Status: [{get_status_color(task.status)}]{task.status.value}[/{get_status_color(task.status)}]")
+    p_color = get_priority_color(task.priority)
+    console.print(f"Priority: [{p_color}]{task.priority.value}[/{p_color}]")
+    s_color = get_status_color(task.status)
+    console.print(f"Status: [{s_color}]{task.status.value}[/{s_color}]")
+    if task.due_date:
+        due_style = "red bold" if task.is_overdue else "white"
+        due_fmt = task.due_date.strftime('%Y-%m-%d %H:%M')
+        console.print(f"Due Date: [{due_style}]{due_fmt}[/{due_style}]")
+    else:
+        console.print("Due Date: (none)")
     console.print(f"Tags: {', '.join(task.tags) if task.tags else '(none)'}")
     console.print(f"Created: {task.created_at.strftime('%Y-%m-%d %H:%M')}")
     console.print(f"Updated: {task.updated_at.strftime('%Y-%m-%d %H:%M')}")

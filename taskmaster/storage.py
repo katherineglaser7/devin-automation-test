@@ -88,14 +88,27 @@ class TaskManager:
                 self._task_list = TaskList(name="My Tasks")
         return self._task_list
 
-    def add_task(self, title: str, description: str = "", priority: str = "medium", tags: list[str] = None) -> Task:
+    def add_task(
+        self,
+        title: str,
+        description: str = "",
+        priority: str = "medium",
+        tags: list[str] = None,
+        due_date: str = None,
+    ) -> Task:
         """Add a new task."""
+        from datetime import datetime
+
         from .models import Priority
+        parsed_due_date = None
+        if due_date:
+            parsed_due_date = datetime.fromisoformat(due_date)
         task = Task(
             title=title,
             description=description,
             priority=Priority(priority),
             tags=tags or [],
+            due_date=parsed_due_date,
         )
         self.task_list.add_task(task)
         self.storage.save(self.task_list)
