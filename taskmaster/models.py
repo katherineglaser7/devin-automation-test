@@ -1,10 +1,10 @@
 """Data models for TaskMaster."""
 
+import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Optional
-import uuid
 
 
 class Priority(Enum):
@@ -31,9 +31,19 @@ class Task:
     priority: Priority = Priority.MEDIUM
     status: Status = Status.PENDING
     tags: list[str] = field(default_factory=list)
+    due_date: Optional[datetime] = None
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)
     id: str = field(default_factory=lambda: str(uuid.uuid4())[:8])
+
+    @property
+    def is_overdue(self) -> bool:
+        """Check if the task is overdue."""
+        if self.due_date is None:
+            return False
+        if self.status == Status.COMPLETED:
+            return False
+        return datetime.now() > self.due_date
 
     def mark_complete(self) -> None:
         """Mark the task as completed."""
@@ -54,6 +64,7 @@ class Task:
             "priority": self.priority.value,
             "status": self.status.value,
             "tags": self.tags,
+            "due_date": self.due_date.isoformat() if self.due_date else None,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
         }
@@ -61,6 +72,8 @@ class Task:
     @classmethod
     def from_dict(cls, data: dict) -> "Task":
         """Create a Task from a dictionary."""
+        due_date_str = data.get("due_date")
+        due_date = datetime.fromisoformat(due_date_str) if due_date_str else None
         return cls(
             id=data["id"],
             title=data["title"],
@@ -68,6 +81,7 @@ class Task:
             priority=Priority(data.get("priority", "medium")),
             status=Status(data.get("status", "pending")),
             tags=data.get("tags", []),
+            due_date=due_date,
             created_at=datetime.fromisoformat(data["created_at"]),
             updated_at=datetime.fromisoformat(data["updated_at"]),
         )

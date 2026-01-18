@@ -1,9 +1,8 @@
 """Tests for TaskMaster models."""
 
-import pytest
-from datetime import datetime
+from datetime import datetime, timedelta
 
-from taskmaster.models import Task, TaskList, Priority, Status
+from taskmaster.models import Priority, Status, Task, TaskList
 
 
 class TestTask:
@@ -17,6 +16,7 @@ class TestTask:
         assert task.priority == Priority.MEDIUM
         assert task.status == Status.PENDING
         assert task.tags == []
+        assert task.due_date is None
         assert task.id is not None
 
     def test_create_task_with_all_fields(self):
@@ -72,6 +72,76 @@ class TestTask:
         assert task.title == "Test task"
         assert task.priority == Priority.HIGH
         assert task.status == Status.IN_PROGRESS
+
+    def test_create_task_with_due_date(self):
+        """Test creating a task with a due date."""
+        due = datetime.now() + timedelta(days=7)
+        task = Task(title="Task with due date", due_date=due)
+        assert task.due_date == due
+        assert task.is_overdue is False
+
+    def test_task_is_overdue(self):
+        """Test that a task is correctly identified as overdue."""
+        past_date = datetime.now() - timedelta(days=1)
+        task = Task(title="Overdue task", due_date=past_date)
+        assert task.is_overdue is True
+
+    def test_task_not_overdue_when_completed(self):
+        """Test that a completed task is not marked as overdue."""
+        past_date = datetime.now() - timedelta(days=1)
+        task = Task(title="Completed task", due_date=past_date)
+        task.mark_complete()
+        assert task.is_overdue is False
+
+    def test_task_not_overdue_without_due_date(self):
+        """Test that a task without due date is not overdue."""
+        task = Task(title="No due date")
+        assert task.is_overdue is False
+
+    def test_to_dict_with_due_date(self):
+        """Test converting task with due date to dictionary."""
+        due = datetime(2024, 6, 15, 10, 0, 0)
+        task = Task(title="Test task", due_date=due)
+        data = task.to_dict()
+        assert data["due_date"] == "2024-06-15T10:00:00"
+
+    def test_to_dict_without_due_date(self):
+        """Test converting task without due date to dictionary."""
+        task = Task(title="Test task")
+        data = task.to_dict()
+        assert data["due_date"] is None
+
+    def test_from_dict_with_due_date(self):
+        """Test creating task from dictionary with due date."""
+        data = {
+            "id": "abc123",
+            "title": "Test task",
+            "description": "Description",
+            "priority": "high",
+            "status": "pending",
+            "tags": [],
+            "due_date": "2024-06-15T10:00:00",
+            "created_at": "2024-01-01T10:00:00",
+            "updated_at": "2024-01-01T11:00:00",
+        }
+        task = Task.from_dict(data)
+        assert task.due_date == datetime(2024, 6, 15, 10, 0, 0)
+
+    def test_from_dict_without_due_date(self):
+        """Test creating task from dictionary without due date."""
+        data = {
+            "id": "abc123",
+            "title": "Test task",
+            "description": "Description",
+            "priority": "high",
+            "status": "pending",
+            "tags": [],
+            "due_date": None,
+            "created_at": "2024-01-01T10:00:00",
+            "updated_at": "2024-01-01T11:00:00",
+        }
+        task = Task.from_dict(data)
+        assert task.due_date is None
 
 
 class TestTaskList:
