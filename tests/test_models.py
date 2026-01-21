@@ -73,6 +73,81 @@ class TestTask:
         assert task.priority == Priority.HIGH
         assert task.status == Status.IN_PROGRESS
 
+    def test_update_title(self):
+        """Test updating task title."""
+        task = Task(title="Original title")
+        original_updated = task.updated_at
+        task.update(title="New title")
+        assert task.title == "New title"
+        assert task.updated_at >= original_updated
+
+    def test_update_description(self):
+        """Test updating task description."""
+        task = Task(title="Test task", description="Original description")
+        task.update(description="New description")
+        assert task.description == "New description"
+
+    def test_update_priority(self):
+        """Test updating task priority."""
+        task = Task(title="Test task", priority=Priority.LOW)
+        task.update(priority=Priority.CRITICAL)
+        assert task.priority == Priority.CRITICAL
+
+    def test_update_status(self):
+        """Test updating task status."""
+        task = Task(title="Test task")
+        task.update(status=Status.IN_PROGRESS)
+        assert task.status == Status.IN_PROGRESS
+
+    def test_update_add_tags(self):
+        """Test adding tags to a task."""
+        task = Task(title="Test task", tags=["existing"])
+        task.update(add_tags=["new", "another"])
+        assert "existing" in task.tags
+        assert "new" in task.tags
+        assert "another" in task.tags
+
+    def test_update_remove_tags(self):
+        """Test removing tags from a task."""
+        task = Task(title="Test task", tags=["keep", "remove", "also-remove"])
+        task.update(remove_tags=["remove", "also-remove"])
+        assert task.tags == ["keep"]
+
+    def test_update_add_and_remove_tags(self):
+        """Test adding and removing tags simultaneously."""
+        task = Task(title="Test task", tags=["old-tag"])
+        task.update(add_tags=["new-tag"], remove_tags=["old-tag"])
+        assert "new-tag" in task.tags
+        assert "old-tag" not in task.tags
+
+    def test_update_multiple_fields(self):
+        """Test updating multiple fields at once."""
+        task = Task(title="Original", description="Old desc", priority=Priority.LOW)
+        task.update(
+            title="Updated",
+            description="New desc",
+            priority=Priority.HIGH,
+            status=Status.COMPLETED,
+        )
+        assert task.title == "Updated"
+        assert task.description == "New desc"
+        assert task.priority == Priority.HIGH
+        assert task.status == Status.COMPLETED
+
+    def test_update_no_changes(self):
+        """Test that update with no arguments still updates timestamp."""
+        task = Task(title="Test task")
+        original_updated = task.updated_at
+        task.update()
+        assert task.updated_at >= original_updated
+
+    def test_update_add_duplicate_tag(self):
+        """Test that adding a duplicate tag doesn't create duplicates."""
+        task = Task(title="Test task", tags=["existing"])
+        task.update(add_tags=["existing", "new"])
+        assert task.tags.count("existing") == 1
+        assert "new" in task.tags
+
 
 class TestTaskList:
     """Tests for the TaskList model."""

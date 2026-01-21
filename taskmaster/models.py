@@ -45,6 +45,32 @@ class Task:
         self.status = Status.IN_PROGRESS
         self.updated_at = datetime.now()
 
+    def update(
+        self,
+        title: Optional[str] = None,
+        description: Optional[str] = None,
+        priority: Optional[Priority] = None,
+        status: Optional[Status] = None,
+        add_tags: Optional[list[str]] = None,
+        remove_tags: Optional[list[str]] = None,
+    ) -> None:
+        """Update task properties. Only specified fields are modified."""
+        if title is not None:
+            self.title = title
+        if description is not None:
+            self.description = description
+        if priority is not None:
+            self.priority = priority
+        if status is not None:
+            self.status = status
+        if remove_tags:
+            self.tags = [tag for tag in self.tags if tag not in remove_tags]
+        if add_tags:
+            for tag in add_tags:
+                if tag not in self.tags:
+                    self.tags.append(tag)
+        self.updated_at = datetime.now()
+
     def to_dict(self) -> dict:
         """Convert task to dictionary representation."""
         return {

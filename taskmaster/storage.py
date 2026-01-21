@@ -134,6 +134,37 @@ class TaskManager:
         """Get a specific task by ID."""
         return self.task_list.get_task(task_id)
 
+    def update_task(
+        self,
+        task_id: str,
+        title: Optional[str] = None,
+        description: Optional[str] = None,
+        priority: Optional[str] = None,
+        status: Optional[str] = None,
+        add_tags: Optional[list[str]] = None,
+        remove_tags: Optional[list[str]] = None,
+    ) -> Optional[Task]:
+        """Update an existing task. Only specified fields are modified."""
+        task = self.task_list.get_task(task_id)
+        if task is None:
+            return None
+
+        from .models import Priority as PriorityEnum, Status as StatusEnum
+
+        priority_enum = PriorityEnum(priority) if priority else None
+        status_enum = StatusEnum(status) if status else None
+
+        task.update(
+            title=title,
+            description=description,
+            priority=priority_enum,
+            status=status_enum,
+            add_tags=add_tags,
+            remove_tags=remove_tags,
+        )
+        self.storage.save(self.task_list)
+        return task
+
     def clear_completed(self) -> int:
         """Remove all completed tasks. Returns count of removed tasks."""
         from .models import Status

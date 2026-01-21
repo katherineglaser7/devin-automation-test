@@ -160,5 +160,59 @@ def clear():
         console.print("[dim]No completed tasks to clear.[/dim]")
 
 
+@main.command()
+@click.argument("task_id")
+@click.option("-t", "--title", default=None, help="New title for the task")
+@click.option("-d", "--description", default=None, help="New description for the task")
+@click.option(
+    "-p", "--priority",
+    type=click.Choice(["low", "medium", "high", "critical"]),
+    default=None,
+    help="New priority for the task"
+)
+@click.option(
+    "-s", "--status",
+    type=click.Choice(["pending", "in_progress", "completed", "cancelled"]),
+    default=None,
+    help="New status for the task"
+)
+@click.option("--add-tag", multiple=True, help="Add a tag to the task")
+@click.option("--remove-tag", multiple=True, help="Remove a tag from the task")
+def edit(
+    task_id: str,
+    title: str,
+    description: str,
+    priority: str,
+    status: str,
+    add_tag: tuple,
+    remove_tag: tuple,
+):
+    """Edit an existing task's properties."""
+    manager = TaskManager()
+
+    if not any([title, description, priority, status, add_tag, remove_tag]):
+        console.print(
+            "[yellow]No changes specified. Use --help to see available options.[/yellow]"
+        )
+        return
+
+    task = manager.update_task(
+        task_id=task_id,
+        title=title,
+        description=description,
+        priority=priority,
+        status=status,
+        add_tags=list(add_tag) if add_tag else None,
+        remove_tags=list(remove_tag) if remove_tag else None,
+    )
+
+    if task:
+        console.print(
+            f"[green]Updated task:[/green] {task.title} [dim](ID: {task.id})[/dim]"
+        )
+    else:
+        console.print(f"[red]Task not found:[/red] {task_id}")
+
+
 if __name__ == "__main__":
     main()
