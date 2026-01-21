@@ -116,8 +116,25 @@ class TaskManager:
             self.storage.save(self.task_list)
         return task
 
-    def list_tasks(self, status: str = None, priority: str = None) -> list[Task]:
-        """List tasks with optional filtering."""
+    def list_tasks(
+        self,
+        status: str = None,
+        priority: str = None,
+        tags: list[str] = None,
+        match_all_tags: bool = True,
+    ) -> list[Task]:
+        """List tasks with optional filtering.
+
+        Args:
+            status: Filter by task status
+            priority: Filter by task priority
+            tags: Filter by tags (case-insensitive)
+            match_all_tags: If True, tasks must have ALL specified tags (AND).
+                           If False, tasks must have ANY of the specified tags (OR).
+
+        Returns:
+            List of tasks matching all filter criteria.
+        """
         tasks = self.task_list.tasks
 
         if status:
@@ -127,6 +144,19 @@ class TaskManager:
         if priority:
             from .models import Priority
             tasks = [t for t in tasks if t.priority == Priority(priority)]
+
+        if tags:
+            tags_lower = [tag.lower() for tag in tags]
+            if match_all_tags:
+                tasks = [
+                    t for t in tasks
+                    if all(tag in [tt.lower() for tt in t.tags] for tag in tags_lower)
+                ]
+            else:
+                tasks = [
+                    t for t in tasks
+                    if any(tag in [tt.lower() for tt in t.tags] for tag in tags_lower)
+                ]
 
         return tasks
 

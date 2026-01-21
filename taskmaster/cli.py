@@ -72,10 +72,26 @@ def add(title: str, description: str, priority: str, tag: tuple):
     type=click.Choice(["low", "medium", "high", "critical"]),
     help="Filter by priority"
 )
-def list(status: str, priority: str):
+@click.option(
+    "-t", "--tag",
+    multiple=True,
+    help="Filter by tag (can be specified multiple times, case-insensitive)"
+)
+@click.option(
+    "--match-any",
+    is_flag=True,
+    default=False,
+    help="Match tasks with ANY of the specified tags (default: match ALL tags)"
+)
+def list(status: str, priority: str, tag: tuple, match_any: bool):
     """List all tasks."""
     manager = TaskManager()
-    tasks = manager.list_tasks(status=status, priority=priority)
+    tasks = manager.list_tasks(
+        status=status,
+        priority=priority,
+        tags=list(tag) if tag else None,
+        match_all_tags=not match_any,
+    )
 
     if not tasks:
         console.print("[dim]No tasks found.[/dim]")

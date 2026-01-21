@@ -142,3 +142,82 @@ class TestTaskList:
         high_priority = task_list.get_tasks_by_priority(Priority.HIGH)
         assert len(high_priority) == 1
         assert high_priority[0] == task2
+
+    def test_get_tasks_by_single_tag(self):
+        """Test filtering tasks by a single tag."""
+        task_list = TaskList(name="My Tasks")
+        task1 = Task(title="Task 1", tags=["work", "urgent"])
+        task2 = Task(title="Task 2", tags=["personal"])
+        task3 = Task(title="Task 3", tags=["work"])
+        task_list.add_task(task1)
+        task_list.add_task(task2)
+        task_list.add_task(task3)
+
+        work_tasks = task_list.get_tasks_by_tag(["work"])
+        assert len(work_tasks) == 2
+        assert task1 in work_tasks
+        assert task3 in work_tasks
+
+    def test_get_tasks_by_multiple_tags_match_all(self):
+        """Test filtering tasks by multiple tags with AND logic (match_all=True)."""
+        task_list = TaskList(name="My Tasks")
+        task1 = Task(title="Task 1", tags=["work", "urgent"])
+        task2 = Task(title="Task 2", tags=["work"])
+        task3 = Task(title="Task 3", tags=["urgent"])
+        task_list.add_task(task1)
+        task_list.add_task(task2)
+        task_list.add_task(task3)
+
+        tasks = task_list.get_tasks_by_tag(["work", "urgent"], match_all=True)
+        assert len(tasks) == 1
+        assert tasks[0] == task1
+
+    def test_get_tasks_by_multiple_tags_match_any(self):
+        """Test filtering tasks by multiple tags with OR logic (match_all=False)."""
+        task_list = TaskList(name="My Tasks")
+        task1 = Task(title="Task 1", tags=["work", "urgent"])
+        task2 = Task(title="Task 2", tags=["work"])
+        task3 = Task(title="Task 3", tags=["personal"])
+        task_list.add_task(task1)
+        task_list.add_task(task2)
+        task_list.add_task(task3)
+
+        tasks = task_list.get_tasks_by_tag(["work", "urgent"], match_all=False)
+        assert len(tasks) == 2
+        assert task1 in tasks
+        assert task2 in tasks
+
+    def test_get_tasks_by_tag_case_insensitive(self):
+        """Test that tag filtering is case-insensitive."""
+        task_list = TaskList(name="My Tasks")
+        task1 = Task(title="Task 1", tags=["Work", "URGENT"])
+        task2 = Task(title="Task 2", tags=["work"])
+        task_list.add_task(task1)
+        task_list.add_task(task2)
+
+        tasks = task_list.get_tasks_by_tag(["WORK"])
+        assert len(tasks) == 2
+
+        tasks = task_list.get_tasks_by_tag(["work", "urgent"])
+        assert len(tasks) == 1
+        assert tasks[0] == task1
+
+    def test_get_tasks_by_tag_empty_list(self):
+        """Test that empty tag list returns all tasks."""
+        task_list = TaskList(name="My Tasks")
+        task1 = Task(title="Task 1", tags=["work"])
+        task2 = Task(title="Task 2", tags=["personal"])
+        task_list.add_task(task1)
+        task_list.add_task(task2)
+
+        tasks = task_list.get_tasks_by_tag([])
+        assert len(tasks) == 2
+
+    def test_get_tasks_by_tag_no_matches(self):
+        """Test filtering when no tasks match the tag."""
+        task_list = TaskList(name="My Tasks")
+        task1 = Task(title="Task 1", tags=["work"])
+        task_list.add_task(task1)
+
+        tasks = task_list.get_tasks_by_tag(["nonexistent"])
+        assert len(tasks) == 0

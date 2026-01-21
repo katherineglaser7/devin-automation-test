@@ -105,3 +105,28 @@ class TaskList:
     def get_tasks_by_priority(self, priority: Priority) -> list[Task]:
         """Get all tasks with a specific priority."""
         return [task for task in self.tasks if task.priority == priority]
+
+    def get_tasks_by_tag(self, tags: list[str], match_all: bool = True) -> list[Task]:
+        """Get all tasks that have the specified tag(s).
+
+        Args:
+            tags: List of tags to filter by (case-insensitive)
+            match_all: If True, tasks must have ALL specified tags (AND logic).
+                      If False, tasks must have ANY of the specified tags (OR logic).
+
+        Returns:
+            List of tasks matching the tag criteria.
+        """
+        if not tags:
+            return list(self.tasks)
+
+        tags_lower = [tag.lower() for tag in tags]
+
+        def task_matches(task: Task) -> bool:
+            task_tags_lower = [t.lower() for t in task.tags]
+            if match_all:
+                return all(tag in task_tags_lower for tag in tags_lower)
+            else:
+                return any(tag in task_tags_lower for tag in tags_lower)
+
+        return [task for task in self.tasks if task_matches(task)]
